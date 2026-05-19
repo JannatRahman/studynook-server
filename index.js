@@ -1,6 +1,6 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 dotenv.config();
 const app = express();
@@ -27,14 +27,37 @@ async function run() {
   try {
     
     await client.connect();
+
+// 1. CONNECTED WITH MONGODB
     const db = client.db('studynook');
     const studyroomsCollection = db.collection('studyrooms');
 
-    app.get('/studyrooms'), async (req, res) => {
-      const cursor = studyroomsCollection.find();
+
+
+    app.get('/studyrooms', async (req, res) => {
+       const cursor = studyroomsCollection.find();
       const result = await cursor.toArray();
-      console.log(result);
-    }
+      // console.log(result);
+      res.send(result);
+    });
+
+    app.get('/featured', async (req, res) => {
+      const cursor = studyroomsCollection.find().limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+
+    app.get('/studyrooms/:studyroomsId', async (req, res) => {
+     const {studyroomsId} = req.params;
+    //  console.log(studyroomsId);
+    const query = {_id: new ObjectId(studyroomsId)};
+    const result = await studyroomsCollection.findOne(query);
+    res.send(result);
+    });
+
+
+
     
     // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
