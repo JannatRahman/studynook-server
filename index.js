@@ -8,11 +8,7 @@ app.use(cors());
 const port = process.env.PORT || 5000;
 
 
-
-
-
-
-const uri = "mongodb://studynook:6w1QuiTPu7iSMO87@ac-q3n4nqa-shard-00-00.erd7kb0.mongodb.net:27017,ac-q3n4nqa-shard-00-01.erd7kb0.mongodb.net:27017,ac-q3n4nqa-shard-00-02.erd7kb0.mongodb.net:27017/?ssl=true&replicaSet=atlas-s39w7z-shard-0&authSource=admin&appName=Cluster0";
+const uri =process.env.MONGODB_URI
 
 
 const client = new MongoClient(uri, {
@@ -22,6 +18,11 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
+const logger = (req, res, next)    => {
+      console.log(`${req.method} | ${req.url}`);
+      next();
+    } 
 
 async function run() {
   try {
@@ -48,9 +49,12 @@ async function run() {
     })
 
 
-    app.get('/studyrooms/:studyroomsId', async (req, res) => {
+    app.get('/studyrooms/:studyroomsId', 
+      logger,
+
+    async (req, res) => {
      const {studyroomsId} = req.params;
-    //  console.log(studyroomsId);
+    
     const query = {_id: new ObjectId(studyroomsId)};
     const result = await studyroomsCollection.findOne(query);
     res.send(result);
