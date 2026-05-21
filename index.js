@@ -6,6 +6,7 @@ const { createRemoteJWKSet, jwtVerify } = require('jose-cjs');
 dotenv.config();
 const app = express();
 app.use(cors());
+app.use(express.json());
 const port = process.env.PORT || 5000;
 
 
@@ -33,9 +34,8 @@ const logger = (req, res, next)    => {
   
     const verifyToken = async (req, res, next) => {
       const {authorization} = req.headers;
-      // console.log(req.headers, 'from verify token');
       const token = authorization?.split(' ')[1];
-      // console.log(token);
+
  if(!token){
   return res.status(401).json({message: 'Unauthorized'});
  };
@@ -64,13 +64,29 @@ const logger = (req, res, next)    => {
 // 1. CONNECTED WITH MONGODB
     const db = client.db('studynook');
     const studyroomsCollection = db.collection('studyrooms');
+    const bookingCollection = db.collection('booking');
 
 
 
     app.get('/studyrooms', async (req, res) => {
-       const cursor = studyroomsCollection.find();
+      const {search} = req.query;
+
+      let cursor;
+      if(search) {
+        cursor = studyroomsCollection.find({name: {$regex: search, $options: 'i'}});
+
+        console.log( 'from search')
+        
+        
+      }else{
+        cursor = studyroomsCollection.find();
+      };
+
+
       const result = await cursor.toArray();
-      // console.log(result);
+      console.log(result);
+
+
       res.send(result);
     });
 
@@ -89,6 +105,37 @@ const logger = (req, res, next)    => {
     const query = {_id: new ObjectId(studyroomsId)};
     const result = await studyroomsCollection.findOne(query);
     res.send(result);
+    });
+
+   app.get('booking/:userId', async (req, res) => {
+    const {userId} = req.params;
+    const result = await bookingCollection.find({userId: userId}).toArray();
+    res.send(result);
+   })
+
+
+    app.patch('/booking/:studyroomsId',verifyToken,  async (req, res) => {
+      const {studyroomsId} = req.params;
+      const bookingData = req.body;
+
+      const studyrooms = await studyroomsCollection.findOne({_id: new ObjectId(studyroomsId)});
+
+      if(!studyrooms) {
+        res.status(404).json({message: "Rooms not found"});
+      }
+      await studyroomsCollection.updateOne({_id: new ObjectId(studyroomsId)}, 
+    {
+      $inc: {bookingCount: 1},
+      $set: {
+        lastBookingAt: new Date(),
+      },
+    }
+  );
+   const result = await bookingCollection.insertOne({
+    ...bookingData,
+    bookedAt: new Date(),
+   });
+   res.send(result);
     });
 
 
