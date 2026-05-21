@@ -22,7 +22,12 @@ const client = new MongoClient(uri, {
 const logger = (req, res, next)    => {
       console.log(`${req.method} | ${req.url}`);
       next();
-    } 
+    } ;
+  
+    const verifyToken = async (req, res, next) => {
+      console.log(req.headers, 'from verify token');
+      next()
+    }
 
 async function run() {
   try {
@@ -49,10 +54,8 @@ async function run() {
     })
 
 
-    app.get('/studyrooms/:studyroomsId', 
-      logger,
-
-    async (req, res) => {
+    app.get('/studyrooms/:studyroomsId', logger, verifyToken,
+   async (req, res) => {
      const {studyroomsId} = req.params;
     
     const query = {_id: new ObjectId(studyroomsId)};
