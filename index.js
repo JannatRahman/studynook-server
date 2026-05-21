@@ -44,15 +44,16 @@ const logger = (req, res, next)    => {
       new URL('http://localhost:3000/api/auth/jwks')
     )
 
-    const { payload } = await jwtVerify(token, JWKS,)
-    console.log(payload);
+    const { payload } = await jwtVerify(token, JWKS,);
+    req.user = payload;
+//  console.log(req.user);
 
+    next();
   } catch (error) {
     console.error('Token validation failed:', error);
-    
+
     return res.status(401).json({message: 'Unauthorized'});
   }
-    next();
   };
 
  async function run() {
@@ -82,8 +83,9 @@ const logger = (req, res, next)    => {
 
     app.get('/studyrooms/:studyroomsId', logger, verifyToken,
    async (req, res) => {
-     const {studyroomsId} = req.params;
+    // console.log(req.user, 'req');
     
+     const {studyroomsId} = req.params;
     const query = {_id: new ObjectId(studyroomsId)};
     const result = await studyroomsCollection.findOne(query);
     res.send(result);
