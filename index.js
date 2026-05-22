@@ -66,10 +66,15 @@ async function run() {
     const studyroomsCollection = db.collection('studyrooms');
     const bookingCollection = db.collection('booking');
 
+    app.get('/studyrooms', async (req, res) => {
+      const result = await studyroomsCollection.find().toArray();
+      res.json(result)
+    })
+
      app.post('/studyrooms', async (req, res) => {
       const roomData = req.body
       console.log(roomData);
-      
+
       const result = await studyroomsCollection.insertOne(roomData)
 
       res.json(result);
@@ -77,18 +82,28 @@ async function run() {
 
     app.get('/studyrooms', async (req, res) => {
       const { search } = req.query;
-
       let cursor;
+
       if (search) {
-        cursor = studyroomsCollection.find({ name: { $regex: search, $options: 'i' } });
-
-        console.log('from search')
-
-
+        cursor = await  studyroomsCollection.find({
+           $or: [
+            {
+              name: {
+                $regex: search,
+                $options: 'i',
+              }
+            },
+            {
+              description: {
+                $regex: search,
+                $options: 'i',
+              }
+            }
+           ]
+      });
       } else {
         cursor = studyroomsCollection.find();
       };
-
 
       const result = await cursor.toArray();
       console.log(result);
