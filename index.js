@@ -13,7 +13,12 @@ const port = process.env.PORT || 5000;
 const uri = process.env.MONGODB_URI
 
 const JWKS = createRemoteJWKSet(
-  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`));
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+{
+    cache: true,
+    cacheMaxAge: 10 * 60 * 1000, // 10 minutes
+  }
+);
 console.log(JWKS,
   'FROM JWKS'
 );
@@ -66,22 +71,44 @@ async function run() {
     const studyroomsCollection = db.collection('studyrooms');
     const bookingCollection = db.collection('booking');
 
-    app.get('/studyrooms', async (req, res) => {
-      const result = await studyroomsCollection.find().toArray();
-      res.json(result)
-    })
 
-     app.post('/studyrooms', async (req, res) => {
-      const roomData = req.body
-      console.log(roomData);
+//    app.get('/studyrooms', async (req, res) => {
+//     const result = await studyroomsCollection.find().toArray();
+//     res.json(result);
+// });
 
-      const result = await studyroomsCollection.insertOne(roomData)
 
-      res.json(result);
-     })
+   app.post('/studyrooms', async (req, res) => {
+    const studyRoomsData = req.body;
+    const result = await studyroomsCollection.insertOne(studyRoomsData)
+
+    res.send(result);
+   })
+
+//    app.post('/studyrooms', async (req, res) => {
+//   try {
+//     const id = req.params;
+//     const result = await studyroomsCollection.findOne({
+//       _id: new ObjectId(id)
+//     });
+//     res.send(result);
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).send({ message: "Failed to get room" });
+//   }
+// });
+
+  //  app.post('/booking', async (req, res) => {
+  // const bookingData = req.body;
+  // const result = await bookingCollection.insertOne(bookingData)
+
+  // res.send(result);
+// });
+
 
     app.get('/studyrooms', async (req, res) => {
       const { search } = req.query;
+      console.log(search, 'search');
       let cursor;
 
       if (search) {
@@ -119,7 +146,7 @@ async function run() {
     })
 
 
-    app.get('/studyrooms/:studyroomsId', logger, verifyToken,
+    app.get('/studyrooms/:studyroomsId', 
       async (req, res) => {
         // console.log(req.user, 'req');
 
@@ -131,8 +158,18 @@ async function run() {
 
     app.get('/booking/:userId', verifyToken, async (req, res) => {
       const { userId } = req.params;
-      const result = await bookingCollection.find({ userId: userId }).toArray();
-      res.send(result);
+      console.log(userId);
+      const result = await bookingCollection.find({ userId: (userId) }).toArray();
+      console.log(result);
+      res.json(result);
+    })
+
+    app.get('/studyrooms/:userId',  async (req, res) => {
+      const { userId } = req.params;
+      console.log(userId);
+      const result = await studyroomsCollection.find({ userId: (userId) }).toArray();
+      console.log(result);
+      res.json(result);
     })
 
 
@@ -163,7 +200,12 @@ async function run() {
       res.send(result);
     });
 
-
+   
+    app.delete('/studyrooms/:id', async (req, res) => {
+      const {id} = req.params;
+      const result = await studyroomsCollection.deleteOne({id: new ObjectId(id)})
+      res.json(result);
+    })
 
 
     // await client.db("admin").command({ ping: 1 });
