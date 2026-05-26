@@ -72,45 +72,19 @@ async function run() {
     const bookingCollection = db.collection('booking');
 
 
-//    app.get('/studyrooms', async (req, res) => {
-//     const result = await studyroomsCollection.find().toArray();
-//     res.json(result);
-// });
 
 
-   app.post('/studyrooms', async (req, res) => {
+   app.post('/studyrooms',verifyToken, async (req, res) => {
     const studyRoomsData = req.body;
     const result = await studyroomsCollection.insertOne(studyRoomsData)
-
     res.send(result);
    })
-
-//    app.post('/studyrooms', async (req, res) => {
-//   try {
-//     const id = req.params;
-//     const result = await studyroomsCollection.findOne({
-//       _id: new ObjectId(id)
-//     });
-//     res.send(result);
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).send({ message: "Failed to get room" });
-//   }
-// });
-
-  //  app.post('/booking', async (req, res) => {
-  // const bookingData = req.body;
-  // const result = await bookingCollection.insertOne(bookingData)
-
-  // res.send(result);
-// });
 
 
     app.get('/studyrooms', async (req, res) => {
       const { search } = req.query;
       console.log(search, 'search');
       let cursor;
-
       if (search) {
         cursor = await  studyroomsCollection.find({
            $or: [
@@ -131,11 +105,8 @@ async function run() {
       } else {
         cursor = studyroomsCollection.find();
       };
-
       const result = await cursor.toArray();
-      console.log(result);
-
-
+      // console.log(result);
       res.send(result);
     });
 
@@ -148,13 +119,14 @@ async function run() {
 
     app.get('/studyrooms/:studyroomsId', 
       async (req, res) => {
-        // console.log(req.user, 'req');
-
         const { studyroomsId } = req.params;
+        // console.log(studyroomsId);
         const query = { _id: new ObjectId(studyroomsId) };
         const result = await studyroomsCollection.findOne(query);
+        // console.log(result);
         res.send(result);
       });
+      
 
     app.get('/booking/:userId', verifyToken, async (req, res) => {
       const { userId } = req.params;
@@ -164,19 +136,20 @@ async function run() {
       res.json(result);
     })
 
-    app.get('/studyrooms/:userId',  async (req, res) => {
+    app.get('/mystudyrooms/:userId',verifyToken,  async (req, res) => {
       const { userId } = req.params;
       console.log(userId);
-      const result = await studyroomsCollection.find({ userId: (userId) }).toArray();
+      const result = await studyroomsCollection.find({userId}).toArray();
       console.log(result);
       res.json(result);
     })
-
+   
+    
 
     app.patch('/booking/:studyroomsId', verifyToken, async (req, res) => {
       const { studyroomsId } = req.params;
       const bookingData = req.body;
-
+console.log(studyroomsId, bookingData);
       const studyrooms = await studyroomsCollection.findOne({ _id: new ObjectId(studyroomsId) });
 
       if (!studyrooms) {
@@ -201,11 +174,17 @@ async function run() {
     });
 
    
-    app.delete('/studyrooms/:id', async (req, res) => {
+    app.delete('/studyrooms/:id',verifyToken, async (req, res) => {
       const {id} = req.params;
-      const result = await studyroomsCollection.deleteOne({id: new ObjectId(id)})
+      const result = await studyroomsCollection.deleteOne({_id: new ObjectId(id)})
       res.json(result);
     })
+    
+    // app.delete('/boooking/:id',verifyToken, async (req, res) => {
+    //   const {id} = req.params;
+    //   const result = await studyroomsCollection.deleteOne({id: new ObjectId(id)})
+    //   res.json(result);
+    // })
 
 
     // await client.db("admin").command({ ping: 1 });
