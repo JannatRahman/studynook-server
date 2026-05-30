@@ -40,20 +40,16 @@ const verifyToken = async (req, res, next) => {
     return res.status(401).json({ message: 'Unauthorized' });
   };
   try {
-    
     const { payload } = await jwtVerify(token, JWKS,);
     req.user = payload;
-    //  console.log(req.user);
-
     next();
   } catch (error) {
     // console.error('Token validation failed:', error);
-
     return res.status(401).json({ message: 'Unauthorized' });
   }
   
 };
-// console.log(verifyToken);
+
 
 async function run() {
   try {
@@ -68,7 +64,7 @@ async function run() {
 
 
 
-   app.post('/studyrooms', async (req, res) => {
+   app.post('/studyrooms',verifyToken, async (req, res) => {
     const studyRoomsData = req.body;
     const result = await studyRoomsCollection.insertOne(studyRoomsData)
     res.send(result);
@@ -111,7 +107,7 @@ async function run() {
     })
 
 
-    app.get('/studyrooms/:id', 
+    app.get('/studyrooms/:id',verifyToken, 
       async (req, res) => {
         const {id } = req.params;
         // console.log('string', id);
@@ -123,7 +119,7 @@ async function run() {
       });
       
 
-    app.get('/booking/:userId',  async (req, res) => {
+    app.get('/booking/:userId',verifyToken,  async (req, res) => {
       const { userId } = req.params;
       // console.log(userId);
       const result = await bookingCollection.find({ userId: (userId) }).toArray();
@@ -131,7 +127,7 @@ async function run() {
       res.json(result);
     })
 
-    app.get('/mystudyrooms/:userId',  async (req, res) => {
+    app.get('/mystudyrooms/:userId',verifyToken,  async (req, res) => {
       const { userId } = req.params;
       // console.log(userId);
       const result = await studyRoomsCollection.find({userId}).toArray();
@@ -141,10 +137,10 @@ async function run() {
    
     
 
-    app.patch('/booking/:studyroomsId',  async (req, res) => {
+    app.patch('/booking/:studyroomsId',verifyToken,  async (req, res) => {
       const { studyroomsId } = req.params;
       const bookingData = req.body;
-// console.log(studyroomsId, bookingData);
+
       const studyrooms = await studyRoomsCollection.findOne({ _id: new ObjectId(studyroomsId) });
 
       if (!studyrooms) {
@@ -168,7 +164,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch('/studyroomsEdit/:id',  async (req, res) => {
+    app.patch('/studyroomsEdit/:id',verifyToken, async (req, res) => {
       const id = req.params.id;
       const updatedData = req.body;
       const query = { _id: new ObjectId(id)};
@@ -179,7 +175,7 @@ async function run() {
     })
     
    
-    app.delete('/studyrooms/:id', async (req, res) => {
+    app.delete('/studyrooms/:id',verifyToken, async (req, res) => {
       const {id} = req.params;
       const result = await studyRoomsCollection.deleteOne({_id: new ObjectId(id)})
       res.json(result);
