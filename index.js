@@ -10,7 +10,7 @@ app.use(express.json());
 const port = process.env.PORT || 5000;
 
 
-const uri = process.env.MONGODB_URI
+const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@cluster0.3036qk8.mongodb.net/?appName=Cluster0`;
 
 const JWKS = createRemoteJWKSet(
   new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
@@ -19,9 +19,6 @@ const JWKS = createRemoteJWKSet(
     cacheMaxAge: 10 * 60 * 1000, // 10 minutes
   }
 );
-// console.log(JWKS,
-//   'FROM JWKS'
-// );
 
 
 const client = new MongoClient(uri, {
@@ -54,7 +51,7 @@ const verifyToken = async (req, res, next) => {
 async function run() {
   try {
 
-    await client.connect();
+    // await client.connect();
 
     // 1. CONNECTED WITH MONGODB
     const db = client.db('studynook');
@@ -107,14 +104,11 @@ async function run() {
     })
 
 
-    app.get('/studyrooms/:id',verifyToken, 
+    app.get('/studyrooms/:id', 
       async (req, res) => {
-        const {id } = req.params;
-        // console.log('string', id);
+        const id  = req.params.id;
         const query = { _id: new ObjectId(id) };
-        // console.log('query', query);
         const result = await studyRoomsCollection.findOne(query);
-        // console.log(result);
         res.send(result);
       });
       
