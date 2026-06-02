@@ -10,7 +10,8 @@ app.use(express.json());
 const port = process.env.PORT || 5000;
 
 
-const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@cluster0.3036qk8.mongodb.net/?appName=Cluster0`;
+// const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@cluster0.3036qk8.mongodb.net/?appName=Cluster0`;
+const uri = `mongodb://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@ac-q3n4nqa-shard-00-00.erd7kb0.mongodb.net:27017,ac-q3n4nqa-shard-00-01.erd7kb0.mongodb.net:27017,ac-q3n4nqa-shard-00-02.erd7kb0.mongodb.net:27017/?ssl=true&replicaSet=atlas-s39w7z-shard-0&authSource=admin&appName=Cluster0`;
 
 const JWKS = createRemoteJWKSet(
   new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
@@ -68,34 +69,93 @@ async function run() {
    })
 
 
+    // app.get('/studyrooms', async (req, res) => {
+    //   const { search } = req.query;
+    //   // console.log(search, 'search');
+    //   let cursor;
+    //   if (search) {
+    //     cursor = await  studyRoomsCollection.find({
+    //        $or: [
+    //         {
+    //           name: {
+    //             $regex: search,
+    //             $options: 'i',
+    //           }
+    //         },
+    //         {
+    //           description: {
+    //             $regex: search,
+    //             $options: 'i',
+    //           }
+    //         }
+    //        ]
+    //   });
+    //   } else {
+    //     cursor = studyRoomsCollection.find();
+    //   };
+    //   const result = await cursor.toArray();
+    //   // console.log(result);
+    //   res.send(result);
+    // });
+
     app.get('/studyrooms', async (req, res) => {
-      const { search } = req.query;
-      // console.log(search, 'search');
-      let cursor;
-      if (search) {
-        cursor = await  studyRoomsCollection.find({
-           $or: [
-            {
-              name: {
-                $regex: search,
-                $options: 'i',
-              }
-            },
-            {
-              description: {
-                $regex: search,
-                $options: 'i',
-              }
-            }
-           ]
-      });
-      } else {
-        cursor = studyRoomsCollection.find();
+  try {
+    const {
+      search,
+      amenities,
+      minPrice,
+      maxPrice,
+      floor,
+    } = req.query;
+
+    const query = {};
+
+    // Search by room name
+    if (search) {
+      query.name = {
+        $regex: search,
+        $options: 'i',
       };
-      const result = await cursor.toArray();
-      // console.log(result);
-      res.send(result);
+    }
+
+    // Amenities filter
+    if (amenities) {
+      query.amenities = {
+        $in: amenities.split(','),
+      };
+    }
+
+    // Hourly Rate Filter
+    if (minPrice || maxPrice) {
+      query.hourlyRate = {};
+
+      if (minPrice) {
+        query.hourlyRate.$gte = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        query.hourlyRate.$lte = Number(maxPrice);
+      }
+    }
+
+    // Floor Filter
+    if (floor) {
+      query.floor = Number(floor);
+    }
+
+    const result = await studyRoomsCollection
+      .find(query)
+      .toArray();
+
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({
+      message: 'Server Error',
+      error: error.message,
     });
+  }
+});
+
 
     app.get('/featured', async (req, res) => {
       const cursor = studyRoomsCollection.find().limit(6);
