@@ -191,6 +191,18 @@ async function run() {
       res.json(result);
     })
 
+    app.patch("/bookingUpdate/:id", async (req, res) => {
+      const { id } = req.params;
+      // console.log(id);
+      // const bookingData = req.body;
+      const query = { roomId: id };
+      const updateInfo = { $set: { status: 'Cancelled' } };
+      // console.log(id, query, updateInfo);
+      const result = await bookingCollection.updateOne(query, updateInfo);
+      // console.log(result);
+      res.send(result);
+    });
+
     app.get('/mystudyrooms/:userId',verifyToken,  async (req, res) => {
       const { userId } = req.params;
       // console.log(userId);
