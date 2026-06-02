@@ -98,63 +98,73 @@ async function run() {
     //   res.send(result);
     // });
 
-    app.get('/studyrooms', async (req, res) => {
-  try {
-    const {
-      search,
-      amenities,
-      minPrice,
-      maxPrice,
-      floor,
-    } = req.query;
+   app.get("/studyRooms", async (req, res) => {
+     
+        const { search, minPrice, maxPrice, minFloor, maxFloor, amenities } =
+          req.query;
+        const query = {};
 
-    const query = {};
+        // Search
+        if (search) {
+          query.$or = [
+            {
+              name: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              description: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ];
+        }
 
-    // Search by room name
-    if (search) {
-      query.name = {
-        $regex: search,
-        $options: 'i',
-      };
-    }
+        // Price Filter
+        if (minPrice || maxPrice) {
+          query.pricePerHour = {};
 
-    // Amenities filter
-    if (amenities) {
-      query.amenities = {
-        $in: amenities.split(','),
-      };
-    }
+          if (minPrice) {
+            query.pricePerHour.$gte = Number(minPrice);
+          }
 
-    // Hourly Rate Filter
-    if (minPrice || maxPrice) {
-      query.hourlyRate = {};
+          if (maxPrice) {
+            query.pricePerHour.$lte = Number(maxPrice);
+          }
+        }
 
-      if (minPrice) {
-        query.hourlyRate.$gte = Number(minPrice);
-      }
+        // Floor Filter
+        if (minFloor || maxFloor) {
+          query.floor = {};
 
-      if (maxPrice) {
-        query.hourlyRate.$lte = Number(maxPrice);
-      }
-    }
+          if (minFloor) {
+            query.floor.$gte = Number(minFloor);
+          }
 
-    // Floor Filter
-    if (floor) {
-      query.floor = Number(floor);
-    }
+          if (maxFloor) {
+            query.floor.$lte = Number(maxFloor);
+          }
+        }
 
-    const result = await studyRoomsCollection
-      .find(query)
-      .toArray();
+        // Amenities Filter
+        if (amenities) {
+          const amenitiesArray = amenities.split(",");
 
-    res.send(result);
-  } catch (error) {
-    res.status(500).send({
-      message: 'Server Error',
-      error: error.message,
+          query.amenities = {
+             $in: amenitiesArray,
+          };
+        }
+
+        
+        const result = await studyRoomsCollection.find(query).toArray();
+        // console.log(result);
+
+        res.send(result);
+      
+      
     });
-  }
-});
 
 
     app.get('/featured', async (req, res) => {
